@@ -12,13 +12,16 @@ import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private Button mScreenCaptureBtn;
+    private Button mVideoCaptureBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mScreenCaptureBtn = findViewById(R.id.screen_capture);
+        mVideoCaptureBtn = findViewById(R.id.video_capture_controller);
         mScreenCaptureBtn.setOnClickListener(this);
+        mVideoCaptureBtn.setOnClickListener(this);
     }
 
     @Override
@@ -29,6 +32,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startActivity(intent);
 
                 break;
+            case R.id.video_capture:
+                Intent videoCapture = new Intent(MainActivity.this, VideoCaptureActivity.class);
+                startActivity(videoCapture);
+                break;
+
+
         }
     }
 }

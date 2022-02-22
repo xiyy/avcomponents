@@ -4,23 +4,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     tools:context=".MainActivity">
 
     <Button
-        android:id="@+id/screen_capture"
+        android:id="@+id/video_capture_controller"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="录屏"></Button>
-
-    <Button
-        android:id="@+id/video_capture"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="录制视频">
-
-    </Button>
+        android:text="开始录制"></Button>
 
 </LinearLayout>
