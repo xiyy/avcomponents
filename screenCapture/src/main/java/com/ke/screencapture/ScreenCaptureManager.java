@@ -52,6 +52,10 @@ public class ScreenCaptureManager {
     }
 
     public void startScreenCapture() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            onError(ErrorCode.ERROR_PERMISSION_LOW_VERSION_SYSTEM, ErrorMessage.ERROR_PERMISSION_LOW_VERSION_SYSTEM);
+            return;
+        }
         Activity activity = getActivity();
         if (activity != null) {
             Intent intent = new Intent(activity, ScreenCaptureActivity.class);
