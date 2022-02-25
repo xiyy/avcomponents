@@ -65,38 +65,13 @@ public class ScreenCaptureService extends Service {
         }
 
         public Notification buildNotification() {
-            if (shouldCreateNowPlayingChannel()) {
-                createNowPlayingChannel();
-            }
-
             NotificationCompat.Builder builder =
                     new NotificationCompat.Builder(mContext, NOTIFICATION_CHANNEL_ID);
 
-            return builder.setContentTitle("")
-                    .setContentTitle("")
-                    .setOnlyAlertOnce(true)
-                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            return builder.setContentTitle(mContext.getString(R.string.screen_capture_notification_title)).setContentText(AppUtil.getAppName(mContext) + mContext.getString(R.string.screen_capture_notification_text)).setSmallIcon(R.drawable.screen_capture_notification_icon)
                     .build();
         }
 
-        @RequiresApi(api = Build.VERSION_CODES.O)
-        private boolean nowPlayingChannelExists() {
-            return mNotificationManager.getNotificationChannel(NOTIFICATION_CHANNEL_ID) != null;
-        }
-
-        private boolean shouldCreateNowPlayingChannel() {
-            return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !nowPlayingChannelExists();
-        }
-
-        @RequiresApi(api = Build.VERSION_CODES.O)
-        private void createNowPlayingChannel() {
-            final NotificationChannel channel = new NotificationChannel(
-                    NOTIFICATION_CHANNEL_ID,
-                    "name",
-                    NotificationManager.IMPORTANCE_LOW);
-            channel.setDescription("description");
-            mNotificationManager.createNotificationChannel(channel);
-        }
     }
 
 }

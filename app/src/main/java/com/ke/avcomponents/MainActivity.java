@@ -19,7 +19,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mScreenCaptureBtn = findViewById(R.id.screen_capture);
-        mVideoCaptureBtn = findViewById(R.id.video_capture_controller);
+        mVideoCaptureBtn = findViewById(R.id.video_capture);
         mScreenCaptureBtn.setOnClickListener(this);
         mVideoCaptureBtn.setOnClickListener(this);
     }

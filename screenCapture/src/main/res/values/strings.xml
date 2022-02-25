@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">AVComponents</string>
+    <string name="screen_capture_notification_title">屏幕录制</string>
+    <string name="screen_capture_notification_text">正在录制屏幕</string>
+</resources>
