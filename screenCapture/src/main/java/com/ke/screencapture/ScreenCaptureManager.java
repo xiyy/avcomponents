@@ -7,9 +7,11 @@ import static android.content.Context.MEDIA_PROJECTION_SERVICE;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Point;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.os.Build;
+import android.util.DisplayMetrics;
 import android.util.Log;
 
 import java.lang.ref.WeakReference;
@@ -19,9 +21,13 @@ import java.util.List;
 public class ScreenCaptureManager {
     private static final String TAG = ScreenCaptureManager.class.getSimpleName();
     public static final String ACTIVITY_RESULT_INTENT = "activityResultIntent";
+    public static final String START_SCENE = "startScene";
+    public static final String VIDEO_PATH = "videoPath";
     private static volatile ScreenCaptureManager mInstance;
     private WeakReference<Activity> mActivity;
     private List<ScreenCaptureListener> mScreenCaptureListenerList = new ArrayList<>();
+    private String mVideoPath;
+    private int mScene;
 
     private ScreenCaptureManager(Activity activity) {
         mActivity = new WeakReference<>(activity);
@@ -51,27 +57,40 @@ public class ScreenCaptureManager {
         }
     }
 
-    public void startScreenCapture() {
+    /**
+     * @param scene     ScreenCaptureConfig.SCREEN_CAPTURE_WITH_BITMAP 回调bitmap  ScreenCaptureConfig.SCREEN_CAPTURE_WITH_VIDEO 生成mp4文件
+     * @param videoPath scene为SCREEN_CAPTURE_WITH_VIDEO时生成MP4的路径
+     */
+    public void startScreenCapture(int scene, String videoPath) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             onError(ErrorCode.ERROR_PERMISSION_LOW_VERSION_SYSTEM, ErrorMessage.ERROR_PERMISSION_LOW_VERSION_SYSTEM);
             return;
         }
         Activity activity = getActivity();
-        if (activity != null) {
+        if (activity == null) return;
+        mScene = scene;
+        mVideoPath = videoPath;
+        if (scene == ScreenCaptureConfig.SCREEN_CAPTURE_WITH_BITMAP || scene == ScreenCaptureConfig.SCREEN_CAPTURE_WITH_VIDEO) {
             Intent intent = new Intent(activity, ScreenCaptureActivity.class);
+            intent.putExtra(START_SCENE, mScene);
+            intent.putExtra(VIDEO_PATH, mVideoPath);
             activity.startActivity(intent);
+        } else {
+            onError(ErrorCode.ERROR_PARAMS_ILLEGAL_START, ErrorMessage.ERROR_PARAMS_ILLEGAL_START + " scene is " + mScene);
         }
-
     }
 
     public void stopScreenCapture() {
         Activity activity = getActivity();
-        if (activity != null) {
+        if (activity == null) return;
+        if (mScene == ScreenCaptureConfig.SCREEN_CAPTURE_WITH_BITMAP) {
             ScreenCaptureProjection.getInstance().stopScreenCapture();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                Intent intent = new Intent(activity, ScreenCaptureService.class);
-                activity.stopService(intent);
-            }
+        } else if (mScene == ScreenCaptureConfig.SCREEN_CAPTURE_WITH_VIDEO) {
+            ScreenCaptureRecorder.getInstance().stopScreenCapture();
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            Intent intent = new Intent(activity, ScreenCaptureService.class);
+            activity.stopService(intent);
         }
 
 
@@ -81,16 +100,31 @@ public class ScreenCaptureManager {
         Activity activity = getActivity();
         if (activity == null) return;
         if (resultCode == RESULT_OK) {
-            ScreenCaptureProjection.getInstance().initContext(activity);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                Intent intent = new Intent(activity, ScreenCaptureService.class);
-                intent.putExtra(ACTIVITY_RESULT_INTENT, data);
-                activity.startForegroundService(intent);
-            } else {
-                MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) activity.getSystemService(MEDIA_PROJECTION_SERVICE);
-                MediaProjection mediaProjection = mediaProjectionManager.getMediaProjection(RESULT_OK, data);
-                ScreenCaptureProjection.getInstance().startScreenCapture(mediaProjection);
+            if (mScene == ScreenCaptureConfig.SCREEN_CAPTURE_WITH_BITMAP) {
+                ScreenCaptureProjection.getInstance().initContext(activity);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    Intent intent = new Intent(activity, ScreenCaptureService.class);
+                    intent.putExtra(ACTIVITY_RESULT_INTENT, data);
+                    activity.startForegroundService(intent);
+                } else {
+                    MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) activity.getSystemService(MEDIA_PROJECTION_SERVICE);
+                    MediaProjection mediaProjection = mediaProjectionManager.getMediaProjection(RESULT_OK, data);
+                    ScreenCaptureProjection.getInstance().startScreenCapture(mediaProjection);
+                }
+            } else if (mScene == ScreenCaptureConfig.SCREEN_CAPTURE_WITH_VIDEO) {
+                ScreenCaptureRecorder.getInstance().initContext(activity);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    Intent intent = new Intent(activity, ScreenCaptureService.class);
+                    intent.putExtra(ACTIVITY_RESULT_INTENT, data);
+                    activity.startForegroundService(intent);
+                } else {
+                    MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) activity.getSystemService(MEDIA_PROJECTION_SERVICE);
+                    MediaProjection mediaProjection = mediaProjectionManager.getMediaProjection(RESULT_OK, data);
+                    ScreenCaptureRecorder.getInstance().startScreenCapture(mediaProjection,ScreenCaptureConfig.SCREEN_CAPTURE_DEFAULT_BITRATE,mVideoPath);
+
+                }
             }
+
 
         } else if (resultCode == RESULT_CANCELED) {
             onError(ErrorCode.ERROR_PERMISSION_DENIED, ErrorMessage.ERROR_PERMISSION_DENIED);
@@ -119,7 +153,7 @@ public class ScreenCaptureManager {
     public void onScreenCaptureStopped() {
         for (ScreenCaptureListener screenCaptureListener : mScreenCaptureListenerList) {
             if (screenCaptureListener != null) {
-                screenCaptureListener.onScreenCaptureStopped();
+                screenCaptureListener.onScreenCaptureStopped(mVideoPath);
             }
         }
     }

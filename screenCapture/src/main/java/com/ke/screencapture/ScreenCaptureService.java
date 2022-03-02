@@ -8,10 +8,12 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Point;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.os.Build;
 import android.os.IBinder;
+import android.util.DisplayMetrics;
 import android.util.Log;
 
 import androidx.annotation.RequiresApi;
@@ -41,7 +43,14 @@ public class ScreenCaptureService extends Service {
         startForeground(NotificationBuilder.NOTIFICATION_ID, notification);
         MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE);
         MediaProjection mediaProjection = mediaProjectionManager.getMediaProjection(RESULT_OK, intent.getParcelableExtra(ScreenCaptureManager.ACTIVITY_RESULT_INTENT));
-        ScreenCaptureProjection.getInstance().startScreenCapture(mediaProjection);
+        int scene = intent.getIntExtra(ScreenCaptureManager.START_SCENE, 0);
+        String videoPath = intent.getStringExtra(ScreenCaptureManager.VIDEO_PATH);
+        if (scene == ScreenCaptureConfig.SCREEN_CAPTURE_WITH_BITMAP) {
+            ScreenCaptureProjection.getInstance().startScreenCapture(mediaProjection);
+        } else if (scene == ScreenCaptureConfig.SCREEN_CAPTURE_WITH_VIDEO) {
+            ScreenCaptureRecorder.getInstance().startScreenCapture(mediaProjection, ScreenCaptureConfig.SCREEN_CAPTURE_DEFAULT_BITRATE, videoPath);
+        }
+
         return super.onStartCommand(intent, flags, startId);
     }
 

@@ -18,6 +18,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.ke.screencapture.BitmapUtil;
+import com.ke.screencapture.ScreenCaptureConfig;
 import com.ke.screencapture.ScreenCaptureListener;
 import com.ke.screencapture.ScreenCaptureManager;
 
@@ -30,8 +31,8 @@ public class ScreenCaptureActivity extends Activity implements ScreenCaptureList
     private static final int SCREEN_CAPTURE_STATUS_STARTED = 2;
     private static final int SCREEN_CAPTURE_STATUS_STOPPING = 3;
     private static final int SCREEN_CAPTURE_STATUS_STOPPED = 4;
-
-
+    private static final String ROOT_PATH = Environment.getExternalStorageDirectory() + "/screenCapture/";
+    private int mCaptureScene = ScreenCaptureConfig.SCREEN_CAPTURE_WITH_VIDEO;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,10 +53,13 @@ public class ScreenCaptureActivity extends Activity implements ScreenCaptureList
     }
 
     @Override
-    public void onScreenCaptureStopped() {
-        Log.d(TAG, "onScreenCaptureStopped");
+    public void onScreenCaptureStopped(String videoPath) {
+        Log.d(TAG, "onScreenCaptureStopped videoPath:" + videoPath);
         mScreenCaptureStatus = SCREEN_CAPTURE_STATUS_STOPPED;
         mScreenCaptureBtn.setText("开始录屏");
+        if (mCaptureScene == ScreenCaptureConfig.SCREEN_CAPTURE_WITH_VIDEO) {
+            mScreenCaptureBtn.post(() -> Toast.makeText(ScreenCaptureActivity.this, "mp4生成成功", Toast.LENGTH_SHORT).show());
+        }
     }
 
     @Override
@@ -67,22 +71,32 @@ public class ScreenCaptureActivity extends Activity implements ScreenCaptureList
 
     @Override
     public void onScreenCaptureBitmap(Bitmap bitmap) {
-        Log.d(TAG, "onScreenCaptureBitmap " + " bitmap:" + bitmap);
-        BitmapUtil.bitmapToJpeg(bitmap, Environment.getExternalStorageDirectory() + "/screenCapture/", System.currentTimeMillis() + ".jpeg");
-
+        if (mCaptureScene == ScreenCaptureConfig.SCREEN_CAPTURE_WITH_BITMAP) {
+            Log.d(TAG, "onScreenCaptureBitmap " + " bitmap:" + bitmap);
+            BitmapUtil.bitmapToJpeg(bitmap, ROOT_PATH, System.currentTimeMillis() + ".jpeg");
+        }
 
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (mScreenCaptureStatus == SCREEN_CAPTURE_STATUS_STARTED) {
+            ScreenCaptureManager.getInstance(this).stopScreenCapture();
+        }
         ScreenCaptureManager.getInstance(this).unregisterListener(this);
+
     }
 
     @Override
     public void onClick(View view) {
         if (mScreenCaptureStatus == SCREEN_CAPTURE_STATUS_STOPPED) {
-            ScreenCaptureManager.getInstance(this).startScreenCapture();
+            if (mCaptureScene == ScreenCaptureConfig.SCREEN_CAPTURE_WITH_VIDEO) {
+                ScreenCaptureManager.getInstance(this).startScreenCapture(ScreenCaptureConfig.SCREEN_CAPTURE_WITH_VIDEO, ROOT_PATH + System.currentTimeMillis() + ".mp4");
+            }else if (mCaptureScene==ScreenCaptureConfig.SCREEN_CAPTURE_WITH_BITMAP) {
+                ScreenCaptureManager.getInstance(this).startScreenCapture(ScreenCaptureConfig.SCREEN_CAPTURE_WITH_BITMAP, "");
+            }
+
             mScreenCaptureBtn.setText("启动中");
             mScreenCaptureStatus = SCREEN_CAPTURE_STATUS_STARTING;
         } else if (mScreenCaptureStatus == SCREEN_CAPTURE_STATUS_STARTED) {
