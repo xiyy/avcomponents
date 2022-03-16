@@ -25,8 +25,7 @@ public class ScreenCaptureService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
-        throw new UnsupportedOperationException("Not yet implemented");
+        return null;
     }
 
     @Override
@@ -38,9 +37,7 @@ public class ScreenCaptureService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand");
-        NotificationBuilder builder = new NotificationBuilder(this);
-        Notification notification = builder.buildNotification();
-        startForeground(NotificationBuilder.NOTIFICATION_ID, notification);
+        startForeground();
         MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE);
         MediaProjection mediaProjection = mediaProjectionManager.getMediaProjection(RESULT_OK, intent.getParcelableExtra(ScreenCaptureManager.ACTIVITY_RESULT_INTENT));
         int scene = intent.getIntExtra(ScreenCaptureManager.START_SCENE, 0);
@@ -59,6 +56,12 @@ public class ScreenCaptureService extends Service {
         Log.d(TAG, "onDestroy");
         super.onDestroy();
         stopForeground(true);
+    }
+
+    private void startForeground() {
+        NotificationBuilder builder = new NotificationBuilder(this);
+        Notification notification = builder.buildNotification();
+        startForeground(NotificationBuilder.NOTIFICATION_ID, notification);
     }
 
     public static class NotificationBuilder {
