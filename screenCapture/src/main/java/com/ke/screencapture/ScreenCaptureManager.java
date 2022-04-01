@@ -88,7 +88,7 @@ public class ScreenCaptureManager {
         } else if (mScene == ScreenCaptureConfig.SCREEN_CAPTURE_WITH_VIDEO) {
             ScreenCaptureRecorder.getInstance().stopScreenCapture();
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && ServiceUtil.isServiceRunning(getActivity().getApplicationContext(), ScreenCaptureService.class.getClass().getName())) {
             Intent intent = new Intent(activity, ScreenCaptureService.class);
             activity.stopService(intent);
         }
